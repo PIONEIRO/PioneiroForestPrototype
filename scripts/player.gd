@@ -3,15 +3,15 @@ class_name ForestPlayer
 
 signal attack_started(direction_index: int, origin: Vector2)
 
-const VISUAL_VERSION := 3
+const VISUAL_VERSION := 4
 const WEAPON_CLASS := "TWO_HANDED_LONGSWORD"
 const DEPTH_BASE := 2048
-const PLAYER_TEXTURE_PATH := "res://assets/art_v3/warrior_greatsword_8dir.svg"
+const PLAYER_TEXTURE_PATH := "res://assets/art_v4/warrior_greatsword_simple_8dir.png"
 const ATTACK_TEXTURE_PATH := "res://assets/art_v3/greatsword_slash.svg"
 const SPEED := 220.0
 const ATTACK_COOLDOWN := 0.30
-const CELL_SIZE := Vector2(96.0, 128.0)
-const ART_SCALE := 1.08
+const CELL_SIZE := Vector2(128.0, 192.0)
+const ART_SCALE := 0.74
 const CAMERA_ZOOM := 1.72
 
 var facing_index := 0
@@ -145,7 +145,7 @@ func _build_visual() -> void:
 	_visual.region_rect = Rect2(0, 0, CELL_SIZE.x, CELL_SIZE.y)
 	_visual.centered = false
 	_visual.scale = Vector2(ART_SCALE, ART_SCALE)
-	_base_visual_position = Vector2(-CELL_SIZE.x * ART_SCALE * 0.5, -124.0 * ART_SCALE)
+	_base_visual_position = Vector2(-CELL_SIZE.x * ART_SCALE * 0.5, -186.0 * ART_SCALE)
 	_visual.position = _base_visual_position
 	add_child(_visual)
 
