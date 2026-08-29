@@ -1,0 +1,68 @@
+name: Forest V4 Headless
+
+on:
+  push:
+    branches: [forest-visual-prototype-v4]
+  pull_request:
+    branches: [main]
+
+jobs:
+  godot-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Godot 4.7.1 official
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install -m 0755 /tmp/godot/Godot_v4.7.1-stable_linux.x86_64 /usr/local/bin/godot
+          godot --version
+      - name: Validate approved V4 PNG
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          p=Path('assets/art_v4/warrior_greatsword_simple_8dir.png')
+          assert p.is_file(), 'missing approved V4 warrior PNG'
+          data=p.read_bytes()
+          assert data[:8] == b'\x89PNG\r\n\x1a\n', 'invalid PNG signature'
+          assert data[12:16] == b'IHDR', 'missing IHDR'
+          assert struct.unpack('>II', data[16:24]) == (1024,192), 'wrong V4 sheet size'
+          print('FOREST_VISUAL_PROTOTYPE_V4_PNG_PASS')
+          PY
+      - name: Import project
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 25s godot --headless --editor --path . --quit 2>&1 | tee import.log
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: Run regression contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > contracts.log
+          for t in res://tests/test_project_boot.gd res://tests/test_player_contract.gd res://tests/test_asset_contract.gd res://tests/test_forest_layout_contract.gd res://tests/test_monster_contract.gd res://tests/test_visual_v4_contract.gd; do
+            timeout 20s godot --headless --path . --script "$t" 2>&1 | tee -a contracts.log
+          done
+      - name: Boot forest scene
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 12s godot --headless --path . --quit-after 2 2>&1 | tee smoke.log
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: Reject hidden errors
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat import.log contracts.log smoke.log 2>/dev/null > all.log || true
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT|Error importing|Error loading image|Tried to set Z index" all.log; then
+            exit 1
+          fi
+          echo "FOREST_VISUAL_PROTOTYPE_V4_PASS"
