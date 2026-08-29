@@ -3,7 +3,7 @@ class_name ForestMonster
 
 enum State { IDLE, WANDER, CHASE, HURT, DEAD }
 
-const DEPTH_BASE := 6000
+const DEPTH_BASE := 2048
 const PROFILES := {
 	"slime": {"max_health": 3, "move_speed": 82.0, "detection_radius": 260.0, "home_radius": 190.0, "texture": "res://assets/art_v2/monster_slime.png", "scale": 0.96},
 	"boar": {"max_health": 5, "move_speed": 112.0, "detection_radius": 340.0, "home_radius": 230.0, "texture": "res://assets/art_v2/monster_boar.png", "scale": 0.96}
