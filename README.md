@@ -1,60 +1,49 @@
-# Pioneiro Forest Prototype
+# PioneiroForestPrototype
 
-Protótipo novo, criado do zero em **Godot 4.7.1**, para testar a direção visual do futuro RPG sem usar o projeto antigo PIONEIRO QUEST.
+Projeto novo e separado do PIONEIRO QUEST antigo.
 
-## O que existe na V1
+## Forest Visual Prototype V2
 
-- uma mata compacta top-down 3/4;
-- árvores grandes, pinheiros, arbustos, pedras, troncos, flores e trilha de terra;
-- profundidade por posição no chão: jogador e monstros passam na frente/atrás dos elementos;
-- colisão concentrada na base/tronco das árvores;
-- jogador com movimento em 8 direções;
-- câmera suave;
-- 2 slimes + 2 javalis;
-- monstros com idle, caminhada, perseguição, dano e morte simples;
-- ataque de teste para avaliar leitura visual;
-- arte vetorial original SVG, sem dependência do PIONEIRO QUEST.
+Branch de teste: `forest-visual-prototype-v2`
 
-## Controles
+A V2 mantém a mecânica comprovada na V1 e substitui a camada visual provisória por uma prova em pixel art raster:
 
-- **WASD** ou **setas**: mover
-- **Espaço**: ataque curto na direção atual
+- personagem maior na tela;
+- câmera mais próxima;
+- movimento em 8 direções;
+- ataque com efeito visual;
+- mata muito mais densa;
+- árvores grandes com ordenação por profundidade;
+- colisão limitada à base/tronco;
+- chão de grama texturizado e caminho de terra;
+- pequeno lago para leitura do ambiente;
+- slime e javali redesenhados;
+- perseguição, dano e morte preservados.
 
-## Como testar no Windows
+### Controles
 
-### 1. GitHub Desktop
+- `WASD` ou setas: movimento
+- duas teclas simultâneas: diagonais
+- `Espaço`: ataque
 
-1. Abra o GitHub Desktop.
-2. Vá em **File → Clone repository...**.
-3. Abra a aba **URL**.
-4. Cole: `https://github.com/PIONEIRO/PioneiroForestPrototype`
-5. Escolha uma pasta nova, por exemplo `C:\Users\SEU_USUARIO\Documents\Godot\PioneiroForestPrototype`.
-6. Clique em **Clone**.
-7. No topo do GitHub Desktop, clique em **Current branch**.
-8. Selecione **`forest-visual-prototype-v1`**.
-9. Clique em **Fetch origin** / **Pull origin** se aparecer.
+### Como testar no GitHub Desktop
 
-> A branch `main` fica deliberadamente limpa enquanto o visual está em avaliação. Teste a branch `forest-visual-prototype-v1`.
+1. No repositório `PioneiroForestPrototype`, clique em **Fetch origin**.
+2. Em **Current branch**, selecione `forest-visual-prototype-v2`.
+3. Se aparecer **Pull origin**, clique nele.
+4. Abra o `project.godot` no Godot 4.7.1.
+5. Pressione `F5`.
 
-### 2. Godot
+### O que avaliar
 
-1. Abra o **Godot 4.7.1**.
-2. No Project Manager, clique em **Import**.
-3. Selecione o arquivo `project.godot` dentro da pasta `PioneiroForestPrototype` clonada pelo GitHub Desktop.
-4. Confirme **Import & Edit**.
-5. Quando o editor abrir, aperte **F5**.
-6. A cena deve iniciar diretamente na mata.
+A V2 ainda é uma prova artística, não arte final. Avalie principalmente:
 
-## O que observar no teste visual
+- tamanho do personagem;
+- distância da câmera;
+- densidade da floresta;
+- variedade e proporção das árvores;
+- leitura ao passar na frente/atrás das copas;
+- coerência visual entre personagem, slime e javali;
+- sensação geral de RPG top-down pixel art.
 
-- tamanho do personagem em relação às árvores;
-- densidade da mata;
-- sensação de câmera top-down 3/4;
-- passagem do personagem na frente e atrás das copas;
-- se a colisão dos troncos parece natural;
-- leitura visual entre slime e javali;
-- se esse nível de detalhe é o caminho certo antes de desenvolver o restante do jogo.
-
-## Licenças
-
-Consulte `ASSET_LICENSES.md`. Qualquer asset gratuito externo que entrar nas próximas versões terá origem e licença registradas antes do commit.
+Não expandiremos cidade, inventário, classes ou quests antes de aprovar a direção visual.

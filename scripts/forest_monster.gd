@@ -4,8 +4,8 @@ class_name ForestMonster
 enum State { IDLE, WANDER, CHASE, HURT, DEAD }
 
 const PROFILES := {
-	"slime": {"max_health": 3, "move_speed": 82.0, "detection_radius": 260.0, "home_radius": 190.0, "texture": "res://assets/art/forest_slime.svg", "scale": 0.52},
-	"boar": {"max_health": 5, "move_speed": 112.0, "detection_radius": 340.0, "home_radius": 230.0, "texture": "res://assets/art/forest_boar.svg", "scale": 0.56}
+	"slime": {"max_health": 3, "move_speed": 82.0, "detection_radius": 260.0, "home_radius": 190.0, "texture": "res://assets/art_v2/monster_slime.png", "scale": 0.96},
+	"boar": {"max_health": 5, "move_speed": 112.0, "detection_radius": 340.0, "home_radius": 230.0, "texture": "res://assets/art_v2/monster_boar.png", "scale": 0.96}
 }
 
 var monster_kind := "slime"
@@ -117,7 +117,7 @@ func take_hit(damage: int, origin: Vector2) -> void:
 		knock_dir = Vector2.DOWN
 	velocity = knock_dir * 165.0
 	if _sprite != null:
-		_sprite.modulate = Color(1.0, 0.58, 0.58)
+		_sprite.modulate = Color(1.0, 0.62, 0.62)
 
 func is_dead() -> bool:
 	return state == State.DEAD
@@ -150,8 +150,8 @@ func _build_collision() -> void:
 
 func _build_visual() -> void:
 	var shadow := Sprite2D.new()
-	shadow.texture = load("res://assets/art/shadow.svg")
-	shadow.scale = Vector2(0.42, 0.34) if monster_kind == "slime" else Vector2(0.62, 0.42)
+	shadow.texture = load("res://assets/art_v2/shadow.png")
+	shadow.scale = Vector2(0.55, 0.42) if monster_kind == "slime" else Vector2(0.78, 0.50)
 	shadow.position = Vector2(0, -1)
 	shadow.z_index = -1
 	add_child(shadow)
@@ -168,13 +168,13 @@ func _build_visual() -> void:
 func _build_health_bar() -> void:
 	var back := ColorRect.new()
 	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	back.color = Color(0.08, 0.07, 0.06, 0.86)
-	back.position = Vector2(-29, -111)
+	back.color = Color(0.06, 0.05, 0.04, 0.88)
+	back.position = Vector2(-29, -79 if monster_kind == "slime" else -87)
 	back.size = Vector2(58, 7)
 	add_child(back)
 	_health_fill = ColorRect.new()
 	_health_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_health_fill.color = Color(0.38, 0.83, 0.31, 0.96)
+	_health_fill.color = Color(0.49, 0.83, 0.31, 0.96)
 	_health_fill.position = Vector2(2, 2)
 	_health_fill.size = Vector2(54, 3)
 	back.add_child(_health_fill)
@@ -189,7 +189,7 @@ func _update_health_bar() -> void:
 func _update_visual_motion() -> void:
 	if _sprite == null:
 		return
-	var amplitude := 2.4 if state == State.CHASE else 1.2
+	var amplitude := 2.0 if state == State.CHASE else 0.9
 	_sprite.position.y = _base_sprite_y + sin(_anim_phase) * amplitude
 	if velocity.x != 0.0:
 		_sprite.flip_h = velocity.x < 0.0
