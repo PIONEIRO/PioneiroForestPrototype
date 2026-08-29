@@ -3,12 +3,16 @@ class_name ForestPlayer
 
 signal attack_started(direction_index: int, origin: Vector2)
 
-const VISUAL_VERSION := 2
+const VISUAL_VERSION := 3
+const WEAPON_CLASS := "TWO_HANDED_LONGSWORD"
+const DEPTH_BASE := 6000
+const PLAYER_TEXTURE_PATH := "res://assets/art_v3/warrior_greatsword_8dir.png"
+const ATTACK_TEXTURE_PATH := "res://assets/art_v3/greatsword_slash.png"
 const SPEED := 220.0
 const ATTACK_COOLDOWN := 0.30
 const CELL_SIZE := Vector2(96.0, 128.0)
-const ART_SCALE := 0.88
-const CAMERA_ZOOM := 1.68
+const ART_SCALE := 1.08
+const CAMERA_ZOOM := 1.72
 
 var facing_index := 0
 var _visual: Sprite2D
@@ -59,6 +63,9 @@ func facing_vector_from_index(index: int) -> Vector2:
 	]
 	return vectors[clampi(index, 0, 7)]
 
+func depth_index_for_y(world_y: float) -> int:
+	return DEPTH_BASE + int(round(world_y))
+
 func _physics_process(delta: float) -> void:
 	var raw := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	var wasd := Vector2(
@@ -74,7 +81,7 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 	else:
 		velocity = Vector2.ZERO
-	z_index = int(global_position.y)
+	z_index = depth_index_for_y(global_position.y)
 	_attack_timer = maxf(0.0, _attack_timer - delta)
 	_handle_attack()
 	_animate_visual(delta, move_dir.length_squared() > 0.001)
@@ -90,14 +97,14 @@ func _handle_attack() -> void:
 func _animate_visual(delta: float, moving: bool) -> void:
 	if _visual == null:
 		return
-	_walk_phase += delta * (11.0 if moving else 2.4)
-	var bob := sin(_walk_phase) * (1.6 if moving else 0.45)
+	_walk_phase += delta * (10.0 if moving else 2.0)
+	var bob := sin(_walk_phase) * (1.8 if moving else 0.35)
 	var attack_lift := 0.0
 	if _attack_timer > ATTACK_COOLDOWN * 0.55:
-		attack_lift = 2.5
+		attack_lift = 3.0
 	_visual.position = _base_visual_position + Vector2(0, bob - attack_lift)
 	_apply_direction_visual()
-	_update_attack_fx(_attack_timer > 0.10)
+	_update_attack_fx(_attack_timer > 0.08)
 
 func _apply_direction_visual() -> void:
 	if _visual == null:
@@ -111,7 +118,7 @@ func _update_attack_fx(show_fx: bool) -> void:
 	if not show_fx:
 		return
 	var facing := facing_vector_from_index(facing_index)
-	_attack_fx.position = facing * 54.0 + Vector2(0, -43)
+	_attack_fx.position = facing * 68.0 + Vector2(0, -48)
 	_attack_fx.rotation = facing.angle()
 	var alpha := clampf(_attack_timer / ATTACK_COOLDOWN, 0.25, 1.0)
 	_attack_fx.modulate = Color(1, 1, 1, alpha)
@@ -119,7 +126,7 @@ func _update_attack_fx(show_fx: bool) -> void:
 func _build_collision() -> void:
 	var collision := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
-	shape.size = Vector2(30, 22)
+	shape.size = Vector2(32, 24)
 	collision.shape = shape
 	collision.position = Vector2(0, -10)
 	add_child(collision)
@@ -127,24 +134,24 @@ func _build_collision() -> void:
 func _build_visual() -> void:
 	_shadow = Sprite2D.new()
 	_shadow.texture = load("res://assets/art_v2/shadow.png")
-	_shadow.scale = Vector2(0.70, 0.54)
+	_shadow.scale = Vector2(0.78, 0.58)
 	_shadow.position = Vector2(0, -2)
 	_shadow.z_index = -1
 	add_child(_shadow)
 
 	_visual = Sprite2D.new()
-	_visual.texture = load("res://assets/art_v2/player_ranger_8dir.png")
+	_visual.texture = load(PLAYER_TEXTURE_PATH)
 	_visual.region_enabled = true
 	_visual.region_rect = Rect2(0, 0, CELL_SIZE.x, CELL_SIZE.y)
 	_visual.centered = false
 	_visual.scale = Vector2(ART_SCALE, ART_SCALE)
-	_base_visual_position = Vector2(-CELL_SIZE.x * ART_SCALE * 0.5, -120.0 * ART_SCALE)
+	_base_visual_position = Vector2(-CELL_SIZE.x * ART_SCALE * 0.5, -124.0 * ART_SCALE)
 	_visual.position = _base_visual_position
 	add_child(_visual)
 
 	_attack_fx = Sprite2D.new()
-	_attack_fx.texture = load("res://assets/art_v2/attack_slash.png")
-	_attack_fx.scale = Vector2(0.82, 0.82)
+	_attack_fx.texture = load(ATTACK_TEXTURE_PATH)
+	_attack_fx.scale = Vector2(0.95, 0.95)
 	_attack_fx.visible = false
 	_attack_fx.z_index = 4
 	add_child(_attack_fx)
