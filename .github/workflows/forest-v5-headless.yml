@@ -1,0 +1,81 @@
+name: Forest V5 Headless
+
+on:
+  push:
+    branches: [forest-visual-prototype-v5]
+  pull_request:
+    branches: [main]
+
+jobs:
+  godot-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Godot 4.7.1 official
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install -m 0755 /tmp/godot/Godot_v4.7.1-stable_linux.x86_64 /usr/local/bin/godot
+          godot --version
+      - name: Validate V5 atlas sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          specs = {
+              'assets/art_v5/warrior_idle_8dir.svg': ('width="512"', 'height="96"'),
+              'assets/art_v5/warrior_walk_8dir_4f.svg': ('width="512"', 'height="384"'),
+              'assets/art_v5/warrior_attack_8dir_6f.svg': ('width="512"', 'height="576"'),
+          }
+          for path, tokens in specs.items():
+              p = Path(path)
+              assert p.is_file(), f'missing {path}'
+              text = p.read_text()
+              assert '<svg' in text and 'shape-rendering="crispEdges"' in text, f'invalid crisp SVG: {path}'
+              for token in tokens:
+                  assert token in text, f'{path}: missing {token}'
+          print('FOREST_VISUAL_PROTOTYPE_V5_ATLAS_PASS')
+          PY
+      - name: Import project
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 25s godot --headless --editor --path . --quit 2>&1 | tee import.log
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: Run regression contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > contracts.log
+          for t in \
+            res://tests/test_project_boot.gd \
+            res://tests/test_player_contract.gd \
+            res://tests/test_asset_contract.gd \
+            res://tests/test_forest_layout_contract.gd \
+            res://tests/test_monster_contract.gd \
+            res://tests/test_visual_v5_contract.gd
+          do
+            echo "=== $t ===" | tee -a contracts.log
+            timeout 20s godot --headless --path . --script "$t" 2>&1 | tee -a contracts.log
+          done
+      - name: Boot forest scene
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 12s godot --headless --path . --quit-after 2 2>&1 | tee smoke.log
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: Reject hidden errors
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat import.log contracts.log smoke.log 2>/dev/null > all.log || true
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT|Error importing|Error loading image|Tried to set Z index" all.log; then
+            exit 1
+          fi
+          echo "FOREST_VISUAL_PROTOTYPE_V5_PASS"
