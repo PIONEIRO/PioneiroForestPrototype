@@ -23,25 +23,28 @@ jobs:
           sudo install -m 0755 /tmp/godot/Godot_v4.7.1-stable_linux.x86_64 /usr/local/bin/godot
           godot --version
 
-      - name: Validate V3 PNG headers
+      - name: Validate V3 source assets
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import struct
           from pathlib import Path
+          import xml.etree.ElementTree as ET
+
           expected = {
-              'assets/art_v3/warrior_greatsword_8dir.png': (768, 128),
-              'assets/art_v3/greatsword_slash.png': (144, 144),
+              Path('assets/art_v3/warrior_greatsword_8dir.svg'): ('0 0 768 128', '768', '128'),
+              Path('assets/art_v3/greatsword_slash.svg'): ('0 0 144 144', '144', '144'),
           }
-          for name, size in expected.items():
-              data = Path(name).read_bytes()
-              assert data[:8] == b'\x89PNG\r\n\x1a\n', f'invalid PNG signature: {name}'
-              assert data[12:16] == b'IHDR', f'missing IHDR: {name}'
-              actual = struct.unpack('>II', data[16:24])
-              assert actual == size, f'{name}: expected {size}, got {actual}'
-              print(f'PNG_OK {name} {actual[0]}x{actual[1]}')
-          print('FOREST_VISUAL_PROTOTYPE_V3_PNG_PASS')
+          for path, (viewbox, width, height) in expected.items():
+              assert path.is_file(), f'missing V3 SVG: {path}'
+              root = ET.parse(path).getroot()
+              assert root.attrib.get('viewBox') == viewbox, f'wrong viewBox: {path}'
+              assert root.attrib.get('width') == width, f'wrong width: {path}'
+              assert root.attrib.get('height') == height, f'wrong height: {path}'
+              print(f'SVG_OK {path} {width}x{height}')
+          assert not Path('assets/art_v3/warrior_greatsword_8dir.png').exists(), 'corrupted warrior PNG must not remain'
+          assert not Path('assets/art_v3/greatsword_slash.png').exists(), 'corrupted slash PNG must not remain'
+          print('FOREST_VISUAL_PROTOTYPE_V3_SOURCE_ASSET_PASS')
           PY
 
       - name: Import project
@@ -90,8 +93,8 @@ jobs:
         run: |
           set -euo pipefail
           cat import.log contracts.log v3.log smoke.log 2>/dev/null > all.log || true
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT" all.log; then
-            echo "Forbidden Godot load/script/asset error found"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT|Error importing|Error loading image|Tried to set Z index" all.log; then
+            echo "Forbidden Godot load/script/asset/depth error found"
             exit 1
           fi
           echo "FOREST_VISUAL_PROTOTYPE_V3_PASS"
