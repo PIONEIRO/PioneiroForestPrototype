@@ -44,14 +44,14 @@ jobs:
             res://tests/test_monster_contract.gd
           do
             echo "=== $test_script ===" | tee -a contracts.log
-            godot --headless --path . --script "$test_script" 2>&1 | tee -a contracts.log
+            timeout 20s godot --headless --path . --script "$test_script" 2>&1 | tee -a contracts.log
           done
 
       - name: Run V2 visual contract
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --script res://tests/test_visual_v2_contract.gd 2>&1 | tee v2.log
+          timeout 20s godot --headless --path . --script res://tests/test_visual_v2_contract.gd 2>&1 | tee v2.log
           code=${PIPESTATUS[0]}
           test "$code" -eq 0
 
