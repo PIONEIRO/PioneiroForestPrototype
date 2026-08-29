@@ -3,6 +3,7 @@ class_name ForestMonster
 
 enum State { IDLE, WANDER, CHASE, HURT, DEAD }
 
+const DEPTH_BASE := 6000
 const PROFILES := {
 	"slime": {"max_health": 3, "move_speed": 82.0, "detection_radius": 260.0, "home_radius": 190.0, "texture": "res://assets/art_v2/monster_slime.png", "scale": 0.96},
 	"boar": {"max_health": 5, "move_speed": 112.0, "detection_radius": 340.0, "home_radius": 230.0, "texture": "res://assets/art_v2/monster_boar.png", "scale": 0.96}
@@ -33,6 +34,9 @@ func get_profile(kind: String) -> Dictionary:
 	var profile: Dictionary = PROFILES.get(kind, {})
 	return profile.duplicate(true)
 
+func depth_index_for_y(world_y: float) -> int:
+	return DEPTH_BASE + int(round(world_y))
+
 func configure(kind: String, player: Node2D) -> void:
 	monster_kind = kind if PROFILES.has(kind) else "slime"
 	_player = player
@@ -57,7 +61,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if state == State.DEAD:
 		return
-	z_index = int(global_position.y)
+	z_index = depth_index_for_y(global_position.y)
 	_state_timer -= delta
 	_anim_phase += delta * (7.5 if monster_kind == "slime" else 9.0)
 	_update_visual_motion()
