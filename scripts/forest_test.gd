@@ -67,7 +67,7 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_monsters()
 	_build_hud()
-	print("FOREST_VISUAL_PROTOTYPE_V3_READY")
+	print("FOREST_VISUAL_PROTOTYPE_V4_READY")
 
 func _draw() -> void:
 	draw_texture_rect(GRASS_TEXTURE, Rect2(-980, -700, 1960, 1400), true)
@@ -185,7 +185,7 @@ func _build_hud() -> void:
 	_hud.add_child(panel)
 
 	var title := Label.new()
-	title.text = "PIONEIRO FOREST — VISUAL V3"
+	title.text = "PIONEIRO FOREST — VISUAL V4"
 	title.position = Vector2(30,26)
 	title.add_theme_font_size_override("font_size", 18)
 	title.add_theme_color_override("font_color", Color("#f2e2b4"))
@@ -199,7 +199,7 @@ func _build_hud() -> void:
 	_hud.add_child(controls)
 
 	var note := Label.new()
-	note.text = "V3: guerreiro aprovado + profundidade corrigida"
+	note.text = "V4: guerreiro simples aprovado + profundidade corrigida"
 	note.position = Vector2(30,75)
 	note.add_theme_font_size_override("font_size", 12)
 	note.add_theme_color_override("font_color", Color("#a9c9a0"))
