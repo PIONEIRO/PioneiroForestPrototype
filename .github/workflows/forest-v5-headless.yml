@@ -21,25 +21,30 @@ jobs:
           unzip -q /tmp/godot.zip -d /tmp/godot
           sudo install -m 0755 /tmp/godot/Godot_v4.7.1-stable_linux.x86_64 /usr/local/bin/godot
           godot --version
-      - name: Validate V5 atlas sources
+      - name: Validate approved warrior source
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import base64, struct, zlib
           from pathlib import Path
-          specs = {
-              'assets/art_v5/warrior_idle_8dir.svg': ('width="512"', 'height="96"'),
-              'assets/art_v5/warrior_walk_8dir_4f.svg': ('width="512"', 'height="384"'),
-              'assets/art_v5/warrior_attack_8dir_6f.svg': ('width="512"', 'height="576"'),
-          }
-          for path, tokens in specs.items():
-              p = Path(path)
-              assert p.is_file(), f'missing {path}'
-              text = p.read_text()
-              assert '<svg' in text and 'shape-rendering="crispEdges"' in text, f'invalid crisp SVG: {path}'
-              for token in tokens:
-                  assert token in text, f'{path}: missing {token}'
-          print('FOREST_VISUAL_PROTOTYPE_V5_ATLAS_PASS')
+          parts=[]
+          for i in range(6):
+              p=Path(f'assets/art_v4/warrior_greatsword_simple_8dir.b64.{i}.txt')
+              assert p.is_file(), f'missing source chunk {i}'
+              parts.append(p.read_text().strip())
+          data=base64.b64decode(''.join(parts), validate=True)
+          assert data[:8] == b'\x89PNG\r\n\x1a\n'
+          assert struct.unpack('>II', data[16:24]) == (512,96)
+          offset=8
+          while offset < len(data):
+              length=struct.unpack('>I',data[offset:offset+4])[0]
+              kind=data[offset+4:offset+8]
+              payload=data[offset+8:offset+8+length]
+              expected=struct.unpack('>I',data[offset+8+length:offset+12+length])[0]
+              assert (zlib.crc32(kind+payload)&0xffffffff) == expected
+              offset += 12+length
+          print('FOREST_VISUAL_PROTOTYPE_V5_SOURCE_PASS')
           PY
       - name: Import project
         shell: bash
@@ -75,7 +80,7 @@ jobs:
         run: |
           set -euo pipefail
           cat import.log contracts.log smoke.log 2>/dev/null > all.log || true
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT|Error importing|Error loading image|Tried to set Z index" all.log; then
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT|Error importing|Error loading image|Tried to set Z index|V5 player source missing|V5 player source decode failed|V5 player source has unexpected dimensions" all.log; then
             exit 1
           fi
           echo "FOREST_VISUAL_PROTOTYPE_V5_PASS"
