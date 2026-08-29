@@ -6,7 +6,8 @@ signal attack_started(direction_index: int, origin: Vector2)
 const VISUAL_VERSION := 4
 const WEAPON_CLASS := "TWO_HANDED_LONGSWORD"
 const DEPTH_BASE := 2048
-const PLAYER_TEXTURE_PATH := "res://assets/art_v4/warrior_greatsword_simple_8dir.png"
+const PLAYER_TEXTURE_SOURCE_PREFIX := "res://assets/art_v4/warrior_greatsword_simple_8dir.b64."
+const PLAYER_TEXTURE_CHUNKS := 6
 const ATTACK_TEXTURE_PATH := "res://assets/art_v3/greatsword_slash.svg"
 const SPEED := 220.0
 const ATTACK_COOLDOWN := 0.30
@@ -131,6 +132,25 @@ func _build_collision() -> void:
 	collision.position = Vector2(0, -10)
 	add_child(collision)
 
+func _load_player_texture() -> Texture2D:
+	var encoded := ""
+	for index in range(PLAYER_TEXTURE_CHUNKS):
+		var path := "%s%d.txt" % [PLAYER_TEXTURE_SOURCE_PREFIX, index]
+		if not FileAccess.file_exists(path):
+			push_error("V4 player texture source missing: %s" % path)
+			return null
+		encoded += FileAccess.get_file_as_string(path).strip_edges()
+	var raw := Marshalls.base64_to_raw(encoded)
+	var image := Image.new()
+	var error := image.load_png_from_buffer(raw)
+	if error != OK:
+		push_error("V4 player texture decode failed: %s" % error)
+		return null
+	if image.get_width() != 512 or image.get_height() != 96:
+		push_error("V4 player texture has unexpected dimensions")
+		return null
+	return ImageTexture.create_from_image(image)
+
 func _build_visual() -> void:
 	_shadow = Sprite2D.new()
 	_shadow.texture = load("res://assets/art_v2/shadow.png")
@@ -140,7 +160,8 @@ func _build_visual() -> void:
 	add_child(_shadow)
 
 	_visual = Sprite2D.new()
-	_visual.texture = load(PLAYER_TEXTURE_PATH)
+	_visual.texture = _load_player_texture()
+	_visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_visual.region_enabled = true
 	_visual.region_rect = Rect2(0, 0, CELL_SIZE.x, CELL_SIZE.y)
 	_visual.centered = false
