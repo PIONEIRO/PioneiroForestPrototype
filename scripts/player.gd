@@ -5,9 +5,9 @@ signal attack_started(direction_index: int, origin: Vector2)
 
 const VISUAL_VERSION := 3
 const WEAPON_CLASS := "TWO_HANDED_LONGSWORD"
-const DEPTH_BASE := 6000
-const PLAYER_TEXTURE_PATH := "res://assets/art_v3/warrior_greatsword_8dir.png"
-const ATTACK_TEXTURE_PATH := "res://assets/art_v3/greatsword_slash.png"
+const DEPTH_BASE := 2048
+const PLAYER_TEXTURE_PATH := "res://assets/art_v3/warrior_greatsword_8dir.svg"
+const ATTACK_TEXTURE_PATH := "res://assets/art_v3/greatsword_slash.svg"
 const SPEED := 220.0
 const ATTACK_COOLDOWN := 0.30
 const CELL_SIZE := Vector2(96.0, 128.0)
