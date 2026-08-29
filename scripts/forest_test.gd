@@ -2,7 +2,7 @@ extends Node2D
 
 const PlayerScript = preload("res://scripts/player.gd")
 const MonsterScript = preload("res://scripts/forest_monster.gd")
-const DEPTH_BASE := 6000
+const DEPTH_BASE := 2048
 
 const GRASS_TEXTURE := preload("res://assets/art_v2/grass_tile.png")
 const DIRT_TEXTURE := preload("res://assets/art_v2/dirt_tile.png")
