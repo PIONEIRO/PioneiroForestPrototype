@@ -38,6 +38,17 @@ func _run() -> void:
 			_check(int(forest.depth_index_for_y(-600.0)) > 0, "forest props at negative Y must stay above ground")
 		forest.free()
 
+	var monster_script := load("res://scripts/forest_monster.gd") as Script
+	_check(monster_script != null, "forest_monster.gd must load")
+	if monster_script != null:
+		var constants: Dictionary = monster_script.get_script_constant_map()
+		_check(int(constants.get("DEPTH_BASE", 0)) >= 5000, "V3 monsters must use positive depth base")
+		var monster = monster_script.new()
+		_check(monster.has_method("depth_index_for_y"), "V3 monsters must expose depth_index_for_y")
+		if monster.has_method("depth_index_for_y"):
+			_check(int(monster.depth_index_for_y(-600.0)) > 0, "monsters at negative Y must stay above ground")
+		monster.free()
+
 	for path in [
 		"res://assets/art_v3/warrior_greatsword_8dir.png",
 		"res://assets/art_v3/greatsword_slash.png"
