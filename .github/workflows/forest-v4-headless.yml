@@ -13,6 +13,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Install Godot 4.7.1 official
         shell: bash
         run: |
@@ -21,57 +22,80 @@ jobs:
           unzip -q /tmp/godot.zip -d /tmp/godot
           sudo install -m 0755 /tmp/godot/Godot_v4.7.1-stable_linux.x86_64 /usr/local/bin/godot
           godot --version
-      - name: Validate approved V4 PNG
+
+      - name: Validate approved V4 source
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import struct, zlib
+          import base64, hashlib, struct, zlib
           from pathlib import Path
-          p=Path('assets/art_v4/warrior_greatsword_simple_8dir.png')
-          assert p.is_file(), 'missing approved V4 warrior PNG'
-          data=p.read_bytes()
-          assert data[:8] == b'\x89PNG\r\n\x1a\n', 'invalid PNG signature'
-          assert data[12:16] == b'IHDR', 'missing IHDR'
-          assert struct.unpack('>II', data[16:24]) == (512,96), 'wrong V4 sheet size'
-          offset=8
+
+          parts = [
+              Path(f'assets/art_v4/warrior_greatsword_simple_8dir.b64.{i}.txt').read_text().strip()
+              for i in range(6)
+          ]
+          encoded = ''.join(parts)
+          assert len(encoded) == 35576, f'wrong base64 length: {len(encoded)}'
+          data = base64.b64decode(encoded, validate=True)
+          assert hashlib.sha256(data).hexdigest() == '5c5cb9a40cc94272c6c8ac04f541d36e96997cf3b8907ee8838d42ed9a39f168', 'wrong V4 warrior SHA256'
+          assert data[:8] == b'\x89PNG\r\n\x1a\n', 'invalid reconstructed PNG signature'
+          assert data[12:16] == b'IHDR', 'missing reconstructed PNG IHDR'
+          assert struct.unpack('>II', data[16:24]) == (512, 96), 'wrong reconstructed V4 sheet dimensions'
+          offset = 8
           while offset < len(data):
-              length=struct.unpack('>I',data[offset:offset+4])[0]
-              kind=data[offset+4:offset+8]
-              payload=data[offset+8:offset+8+length]
-              expected=struct.unpack('>I',data[offset+8+length:offset+12+length])[0]
-              actual=zlib.crc32(kind+payload)&0xffffffff
+              length = struct.unpack('>I', data[offset:offset+4])[0]
+              kind = data[offset+4:offset+8]
+              payload = data[offset+8:offset+8+length]
+              expected = struct.unpack('>I', data[offset+8+length:offset+12+length])[0]
+              actual = zlib.crc32(kind + payload) & 0xffffffff
               assert actual == expected, f'CRC failure in {kind!r}'
-              offset += 12+length
-          print('FOREST_VISUAL_PROTOTYPE_V4_PNG_PASS')
+              offset += 12 + length
+          assert not Path('assets/art_v4/warrior_greatsword_simple_8dir.png').exists(), 'corrupted direct PNG must not remain'
+          print('FOREST_VISUAL_PROTOTYPE_V4_SOURCE_PASS')
           PY
+
       - name: Import project
         shell: bash
         run: |
           set -o pipefail
           timeout 25s godot --headless --editor --path . --quit 2>&1 | tee import.log
-          test "${PIPESTATUS[0]}" -eq 0
+          code=${PIPESTATUS[0]}
+          test "$code" -eq 0
+
       - name: Run regression contracts
         shell: bash
         run: |
           set -euo pipefail
           : > contracts.log
-          for t in res://tests/test_project_boot.gd res://tests/test_player_contract.gd res://tests/test_asset_contract.gd res://tests/test_forest_layout_contract.gd res://tests/test_monster_contract.gd res://tests/test_visual_v4_contract.gd; do
+          for t in \
+            res://tests/test_project_boot.gd \
+            res://tests/test_player_contract.gd \
+            res://tests/test_asset_contract.gd \
+            res://tests/test_forest_layout_contract.gd \
+            res://tests/test_monster_contract.gd \
+            res://tests/test_visual_v4_contract.gd
+          do
+            echo "=== $t ===" | tee -a contracts.log
             timeout 20s godot --headless --path . --script "$t" 2>&1 | tee -a contracts.log
           done
+
       - name: Boot forest scene
         shell: bash
         run: |
           set -o pipefail
           timeout 12s godot --headless --path . --quit-after 2 2>&1 | tee smoke.log
-          test "${PIPESTATUS[0]}" -eq 0
+          code=${PIPESTATUS[0]}
+          test "$code" -eq 0
+
       - name: Reject hidden errors
         if: always()
         shell: bash
         run: |
           set -euo pipefail
           cat import.log contracts.log smoke.log 2>/dev/null > all.log || true
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT|Error importing|Error loading image|Tried to set Z index" all.log; then
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Failed loading resource|ERR_FILE_CORRUPT|Error importing|Error loading image|Tried to set Z index|V4 player texture source missing|V4 player texture decode failed|V4 player texture has unexpected dimensions" all.log; then
+            echo "Forbidden Godot load/script/asset/depth error found"
             exit 1
           fi
           echo "FOREST_VISUAL_PROTOTYPE_V4_PASS"
