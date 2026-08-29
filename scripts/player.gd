@@ -187,9 +187,9 @@ func _build_animation_textures() -> void:
 			_draw_weapon(walk, direction, y, 0.0, false)
 		for frame in range(ATTACK_FRAMES):
 			var y := frame * int(CELL_SIZE.y)
-			var lunge := facing_vector_from_index(direction) * float([0,1,2,3,2,0][frame])
+			var lunge: Vector2 = facing_vector_from_index(direction) * float([0,1,2,3,2,0][frame])
 			attack.blit_rect(source, source_rect, Vector2i(base_x + int(round(lunge.x)), y + int(round(lunge.y))))
-			var swing := [-1.05, -0.65, -0.25, 0.18, 0.58, 0.88][frame]
+			var swing: float = float([-1.05, -0.65, -0.25, 0.18, 0.58, 0.88][frame])
 			_draw_weapon(attack, direction, y, swing, true)
 	_idle_texture = ImageTexture.create_from_image(idle)
 	_walk_texture = ImageTexture.create_from_image(walk)
@@ -197,7 +197,7 @@ func _build_animation_textures() -> void:
 
 func _draw_walk_legs(image: Image, direction: int, frame: int, y_offset: int) -> void:
 	var center_x := direction * int(CELL_SIZE.x) + 48
-	var stride := [3, 1, -3, -1][frame]
+	var stride: int = int([3, 1, -3, -1][frame])
 	var boot_y := y_offset + 82
 	_draw_disc(image, center_x - 7 + stride, boot_y, 4, Color("#3b261c"))
 	_draw_disc(image, center_x + 7 - stride, boot_y + (1 if frame in [1,3] else 0), 4, Color("#4c2f1e"))
