@@ -1,9 +1,9 @@
-; Engine configuration file.
 ; Pioneiro Forest Prototype V1
 config_version=5
 
 [application]
 config/name="Pioneiro Forest Prototype"
+config/features=PackedStringArray("4.7", "GL Compatibility")
 run/main_scene="res://scenes/forest_test.tscn"
 
 [display]
