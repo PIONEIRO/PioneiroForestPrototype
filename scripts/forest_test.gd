@@ -2,6 +2,7 @@ extends Node2D
 
 const PlayerScript = preload("res://scripts/player.gd")
 const MonsterScript = preload("res://scripts/forest_monster.gd")
+const DEPTH_BASE := 6000
 
 const GRASS_TEXTURE := preload("res://assets/art_v2/grass_tile.png")
 const DIRT_TEXTURE := preload("res://assets/art_v2/dirt_tile.png")
@@ -54,6 +55,9 @@ func get_layout_counts() -> Dictionary:
 func get_tree_collision_ratio() -> float:
 	return 42.0 / 208.0
 
+func depth_index_for_y(world_y: float) -> int:
+	return DEPTH_BASE + int(round(world_y))
+
 func _ready() -> void:
 	_world = get_node("World") as Node2D
 	_actors = get_node("Actors") as Node2D
@@ -63,7 +67,7 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_monsters()
 	_build_hud()
-	print("FOREST_VISUAL_PROTOTYPE_V2_READY")
+	print("FOREST_VISUAL_PROTOTYPE_V3_READY")
 
 func _draw() -> void:
 	draw_texture_rect(GRASS_TEXTURE, Rect2(-980, -700, 1960, 1400), true)
@@ -109,7 +113,7 @@ func _spawn_prop(kind: String, pos: Vector2, visual_scale: float, solid: bool) -
 		holder = Node2D.new()
 	holder.name = "%s_%d" % [kind.capitalize(), _world.get_child_count()]
 	holder.position = pos
-	holder.z_index = int(pos.y)
+	holder.z_index = depth_index_for_y(pos.y)
 	_world.add_child(holder)
 
 	var shadow := Sprite2D.new()
@@ -176,26 +180,26 @@ func _build_hud() -> void:
 	var panel := ColorRect.new()
 	panel.color = Color(0.027,0.043,0.030,0.84)
 	panel.position = Vector2(18,18)
-	panel.size = Vector2(390,78)
+	panel.size = Vector2(430,78)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hud.add_child(panel)
 
 	var title := Label.new()
-	title.text = "PIONEIRO FOREST — VISUAL V2"
+	title.text = "PIONEIRO FOREST — VISUAL V3"
 	title.position = Vector2(30,26)
 	title.add_theme_font_size_override("font_size", 18)
 	title.add_theme_color_override("font_color", Color("#f2e2b4"))
 	_hud.add_child(title)
 
 	var controls := Label.new()
-	controls.text = "WASD / Setas: mover   •   Espaço: atacar"
+	controls.text = "WASD / Setas: mover   •   Espaço: espada longa 2 mãos"
 	controls.position = Vector2(30,53)
 	controls.add_theme_font_size_override("font_size", 14)
 	controls.add_theme_color_override("font_color", Color("#d9ead0"))
 	_hud.add_child(controls)
 
 	var note := Label.new()
-	note.text = "V2: avaliar escala, densidade, profundidade e estilo pixel"
+	note.text = "V3: guerreiro aprovado + profundidade corrigida"
 	note.position = Vector2(30,75)
 	note.add_theme_font_size_override("font_size", 12)
 	note.add_theme_color_override("font_color", Color("#a9c9a0"))
